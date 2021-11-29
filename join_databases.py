@@ -1,6 +1,6 @@
+import ast
 import os
 import sys
-import pyspark
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
 
@@ -23,8 +23,11 @@ spark = SparkSession.builder \
     .appName("testing") \
     .getOrCreate()
 
-username = 'alex.batlle'
-password = 'DB050901'
+with open('.uname_and_pwd', 'r') as file:
+    credentials = ast.literal_eval(file.read())
+
+username = credentials['username']
+password = credentials['password']
 
 
 aircraft_utilization = (spark.read
@@ -36,4 +39,4 @@ aircraft_utilization = (spark.read
                         .option("password", password)
                         .load())
 
-print(aircraft_utilization.select('*').rdd.collect())
+# print(aircraft_utilization.select('*').rdd.collect())
