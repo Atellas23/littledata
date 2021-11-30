@@ -6,10 +6,10 @@ from pyspark.sql import SparkSession
 
 HADOOP_HOME = "./resources/hadoop_home"
 JDBC_JAR = "./resources/postgresql-42.2.8.jar"
-PYSPARK_PYTHON = "python3.6"
-PYSPARK_DRIVER_PYTHON = "python3.6"
+PYSPARK_PYTHON = "python3.8"
+PYSPARK_DRIVER_PYTHON = "python3.8"
 
-if(__name__== "__main__"):
+if(__name__ == "__main__"):
     os.environ["HADOOP_HOME"] = HADOOP_HOME
     sys.path.append(HADOOP_HOME + "\\bin")
     os.environ["PYSPARK_PYTHON"] = PYSPARK_PYTHON
@@ -26,4 +26,4 @@ if(__name__== "__main__"):
 
     sc = pyspark.SparkContext.getOrCreate()
 
-    #Create and point to your pipelines here
+    # Create and point to your pipelines here
