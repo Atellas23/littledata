@@ -1,7 +1,5 @@
 # Import the needed libraries
 import ast
-import os
-import sys
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
 import pyspark
@@ -73,7 +71,7 @@ def process(spark_context: pyspark.SparkContext, spark_session: SparkSession):
         t[0][0], '%Y-%m-%d').date()-datetime.timedelta(days=d)), t[0][1]), True) for d in range(7)])
 
     data = data.leftOuterJoin(operation_interruption_rdd).mapValues(
-        lambda v: (*v[0], v[1])).mapValues(lambda v: (*v[:-1], 'UnscheduledMaintenance' if v[-1] else 'ScheduledMaintenance'))
+        lambda v: (*v[0], v[1])).mapValues(lambda v: (*v[:-1], 'Maintenance' if v[-1] else 'NoMaintenance'))
 
     # Return the matrix (save it?)
     with open('result.csv', 'w') as f:
@@ -82,6 +80,7 @@ def process(spark_context: pyspark.SparkContext, spark_session: SparkSession):
         for v in data:
             aux = map(str, v)
             result += ','.join(aux)+'\n'
+        result = result[:-1]
         print(result, file=f)
 
     return 'result.csv'

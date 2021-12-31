@@ -4,6 +4,9 @@ import pyspark
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from pipelines.dataManagement import process as data_management
+from pipelines.dataAnalysis import process as data_analysis
+from pipelines.runtimeClassifier import process as runtime_classifier
+from test import process as process_test
 
 HADOOP_HOME = "./resources/hadoop_home"
 JDBC_JAR = "./resources/postgresql-42.2.8.jar"
@@ -30,6 +33,9 @@ if(__name__ == "__main__"):
 
     sc = pyspark.SparkContext.getOrCreate()
 
+    # data_filepath = data_management(sc, spark)
+    # model_path = data_analysis(sc, spark, data_filepath)
+
     # Create and point to your pipelines here
     if sys.argv[1] == 'dm':
         # 1. Data Management Pipeline
@@ -37,12 +43,13 @@ if(__name__ == "__main__"):
         print('Starting data management pipeline...')
         print(data_filepath)
     elif sys.argv[1] == 'da':
-        print('Starting data management pipeline...')
-        print('not yet implemented!')
-        raise NotImplementedError()
+        print('Starting data analysis pipeline...')
+        model_path = data_analysis(sc, spark, 'result.csv')
+        print(model_path)
     elif sys.argv[1] == 'rc':
-        print('not yet implemented!')
-        raise NotImplementedError()
+        print('Starting runtime classifier pipeline...')
+        res = runtime_classifier(sc, spark, 'classification_tree.model')
+        print('Finished runtime classifier pipeline')
     else:
         print('error: wrong option!')
         raise NotImplementedError()
