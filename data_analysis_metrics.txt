@@ -1,0 +1,8 @@
+Metrics:
+  - Accuracy = 0.9111111111111111
+  - Recall:
+    - Class 0 (NoMaintenance) = 0.8787878787878788
+    - Class 1 (Maintenance) = 1.0
+  - Precision:
+    - Class 0 (NoMaintenance) = 1.0
+    - Class 1 (Maintenance) = 0.75

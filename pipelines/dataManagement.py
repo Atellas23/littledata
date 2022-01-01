@@ -1,22 +1,21 @@
 # Import the needed libraries
 import ast
-from pyspark import SparkConf
 from pyspark.sql import SparkSession
 import pyspark
-import numpy as np
 from functools import reduce
 from datetime import datetime as dt
 import datetime
 
 
-def process(spark_context: pyspark.SparkContext, spark_session: SparkSession):
+def process(spark_context: pyspark.SparkContext, spark_session: SparkSession, output_data_path: str):
+
     # Read the user credentials to access the database in PostgresFIB
     with open('.uname_and_pwd', 'r') as file:
         credentials = ast.literal_eval(file.read())
         username = credentials['username']
         password = credentials['password']
 
-    # Connect to the database and read the needed table as an RDD
+    # Connect to the Data Warehouse and read the needed table as an RDD
     aircraft_utilization_rdd = (spark_session.read
                                 .format("jdbc")
                                 .option("driver", "org.postgresql.Driver")
@@ -35,6 +34,7 @@ def process(spark_context: pyspark.SparkContext, spark_session: SparkSession):
     def parse_date(timestampstr: str, format: str = '%Y-%m-%d') -> str:
         return str(dt.strptime(timestampstr, format).date())
 
+    # Connect to the AMOS database and read the needed table as an RDD
     operation_interruption_rdd = (spark_session.read
                                   .format("jdbc")
                                   .option("driver", "org.postgresql.Driver")
@@ -53,7 +53,7 @@ def process(spark_context: pyspark.SparkContext, spark_session: SparkSession):
 
     # Read the files in the resources/trainingData directory and
     # obtain the mean of the sensor data per aircraft per day
-    csv_files = spark_context.wholeTextFiles('resources/trainingData/*')\
+    sensor_data = spark_context.wholeTextFiles('resources/trainingData/*')\
         .map(lambda t: (t[0][-30:-4], t[1]))\
         .map(lambda t: ((parse_date(t[0][:6], '%d%m%y'), t[0][-6:]), t[1]))\
         .mapValues(lambda v: v.split('\n')[1:-2:])\
@@ -63,18 +63,21 @@ def process(spark_context: pyspark.SparkContext, spark_session: SparkSession):
         .reduceByKey(lambda a, b: ((a[0]*a[1]+b[0]*b[1])/(a[1]+b[1]), a[1]+b[1]))\
         .mapValues(lambda v: v[0])
 
-    # Join the aircraft_utilization rdd with the sensor data rdd
+    # Join the aircraft_utilization rdd with the sensor_data rdd
     data = aircraft_utilization_rdd.join(
-        csv_files).mapValues(lambda v: (*v[0], v[1]))
+        sensor_data).mapValues(lambda v: (*v[0], v[1]))
 
+    # We create a record in operation_interruption for each day in the week before an unscheduled
+    # maintenance event happened. That way, we can join the data RDD with operation_interruption
+    # and obtain the label of each row.
     operation_interruption_rdd = operation_interruption_rdd.flatMap(lambda t: [((str(dt.strptime(
         t[0][0], '%Y-%m-%d').date()-datetime.timedelta(days=d)), t[0][1]), True) for d in range(7)])
 
     data = data.leftOuterJoin(operation_interruption_rdd).mapValues(
         lambda v: (*v[0], v[1])).mapValues(lambda v: (*v[:-1], 'Maintenance' if v[-1] else 'NoMaintenance'))
 
-    # Return the matrix (save it?)
-    with open('result.csv', 'w') as f:
+    # Now, we return the matrix.
+    with open(output_data_path, 'w') as f:
         data = data.values().collect()
         result = 'FH,FC,DM,SensorAVG,Label\n'
         for v in data:
@@ -83,4 +86,5 @@ def process(spark_context: pyspark.SparkContext, spark_session: SparkSession):
         result = result[:-1]
         print(result, file=f)
 
-    return 'result.csv'
+    print(
+        f'Finished pre-processing the training data. It is located at \'{output_data_path}\'')

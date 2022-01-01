@@ -14,9 +14,9 @@ PYSPARK_PYTHON = "python3.8"
 PYSPARK_DRIVER_PYTHON = "python3.8"
 
 if(__name__ == "__main__"):
-    if len(sys.argv) != 2:
-        print(f'usage: {sys.argv[0]} (dm, da, rc)')
-        exit()
+    # if len(sys.argv) != 2:
+    #     print(f'usage: {sys.argv[0]} (dm, da, rc)')
+    #     exit()
     os.environ["HADOOP_HOME"] = HADOOP_HOME
     sys.path.append(HADOOP_HOME + "\\bin")
     os.environ["PYSPARK_PYTHON"] = PYSPARK_PYTHON
@@ -33,23 +33,9 @@ if(__name__ == "__main__"):
 
     sc = pyspark.SparkContext.getOrCreate()
 
-    # data_filepath = data_management(sc, spark)
-    # model_path = data_analysis(sc, spark, data_filepath)
-
     # Create and point to your pipelines here
-    if sys.argv[1] == 'dm':
-        # 1. Data Management Pipeline
-        data_filepath = data_management(sc, spark)
-        print('Starting data management pipeline...')
-        print(data_filepath)
-    elif sys.argv[1] == 'da':
-        print('Starting data analysis pipeline...')
-        model_path = data_analysis(sc, spark, 'result.csv')
-        print(model_path)
-    elif sys.argv[1] == 'rc':
-        print('Starting runtime classifier pipeline...')
-        res = runtime_classifier(sc, spark, 'classification_tree.model')
-        print('Finished runtime classifier pipeline')
-    else:
-        print('error: wrong option!')
-        raise NotImplementedError()
+    model_path = 'classification_tree.model'
+    data_path = 'result.csv'
+    data_management(sc, spark, data_path)
+    data_analysis(spark, data_path, model_path)
+    runtime_classifier(sc, spark, model_path)
