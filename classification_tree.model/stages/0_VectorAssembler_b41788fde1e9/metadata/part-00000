@@ -1,1 +1,0 @@
-{"class":"org.apache.spark.ml.feature.VectorAssembler","timestamp":1641071842248,"sparkVersion":"3.2.0","uid":"VectorAssembler_b41788fde1e9","paramMap":{"outputCol":"features","inputCols":["FH","FC","DM","SensorAVG"]},"defaultParamMap":{"outputCol":"VectorAssembler_b41788fde1e9__output","handleInvalid":"error"}}
